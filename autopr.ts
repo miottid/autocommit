@@ -138,8 +138,8 @@ async function generatePRContent(
     const client = new Anthropic({ apiKey })
 
     const templateInstructions = template
-        ? `Use this PR template as a guide for the body structure:\n\n${template}\n\n`
-        : `Structure the PR body with these sections:
+        ? `Use this PR template as a guide for the body structure. IMPORTANT: Remove any sections from the template that are not relevant to the changes (e.g., if there are no breaking changes, remove the breaking changes section; if there are no migrations, remove the migration section).\n\nTemplate:\n${template}\n\n`
+        : `Structure the PR body with these sections (only include sections relevant to the changes):
 ## Summary
 Brief description of changes
 
@@ -199,14 +199,41 @@ Only output valid JSON, no markdown code blocks.`,
     }
 }
 
-async function createPR(title: string, body: string, baseBranch: string): Promise<string> {
-    return await runGh(['pr', 'create', '--title', title, '--body', body, '--base', baseBranch])
+async function createPR(
+    title: string,
+    body: string,
+    baseBranch: string,
+    headBranch: string,
+): Promise<string> {
+    return await runGh([
+        'pr',
+        'create',
+        '--title',
+        title,
+        '--body',
+        body,
+        '--base',
+        baseBranch,
+        '--head',
+        headBranch,
+    ])
 }
 
 async function checkUnpushedCommits(): Promise<boolean> {
     try {
         const status = await runGit(['status', '-sb'])
         return status.includes('ahead')
+    } catch {
+        return false
+    }
+}
+
+async function remoteBranchExists(): Promise<boolean> {
+    try {
+        const branch = await getCurrentBranch()
+        // Check if the remote branch actually exists (not just if upstream is configured)
+        await runGit(['ls-remote', '--exit-code', '--heads', 'origin', branch])
+        return true
     } catch {
         return false
     }
@@ -237,13 +264,12 @@ async function main() {
             process.exit(1)
         }
 
-        // Check if we need to push
+        // Push branch if needed
+        const remoteExists = await remoteBranchExists()
         const hasUnpushed = await checkUnpushedCommits()
-        if (hasUnpushed) {
-            const shouldPush = await askQuestion('You have unpushed commits. Push now? (Y/n): ')
-            if (shouldPush.toLowerCase() !== 'n') {
-                await pushBranch()
-            }
+
+        if (!remoteExists || hasUnpushed) {
+            await pushBranch()
         }
 
         // Gather PR information
@@ -300,9 +326,8 @@ async function main() {
         }
 
         // Create PR
-        console.log('\nCreating PR...')
-        const prUrl = await createPR(prContent.title, prContent.body, baseBranch)
-        console.log(`\nPR created: ${prUrl}`)
+        const prUrl = await createPR(prContent.title, prContent.body, baseBranch, currentBranch)
+        console.log(prUrl)
     } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : error}`)
         process.exit(1)
