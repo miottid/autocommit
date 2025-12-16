@@ -2,85 +2,18 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import * as readline from 'readline'
-
-async function runGit(args: string[]): Promise<string> {
-    const proc = Bun.spawn(['git', ...args], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-    })
-
-    const stdout = await new Response(proc.stdout).text()
-    const stderr = await new Response(proc.stderr).text()
-
-    await proc.exited
-
-    if (proc.exitCode !== 0) {
-        throw new Error(`git ${args.join(' ')} failed: ${stderr}`)
-    }
-
-    return stdout.trim()
-}
-
-async function runGh(args: string[]): Promise<string> {
-    const proc = Bun.spawn(['gh', ...args], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-    })
-
-    const stdout = await new Response(proc.stdout).text()
-    const stderr = await new Response(proc.stderr).text()
-
-    await proc.exited
-
-    if (proc.exitCode !== 0) {
-        throw new Error(`gh ${args.join(' ')} failed: ${stderr}`)
-    }
-
-    return stdout.trim()
-}
-
-async function getCurrentBranch(): Promise<string> {
-    return runGit(['branch', '--show-current'])
-}
-
-async function getDefaultBranch(): Promise<string> {
-    try {
-        const remote = await runGit(['remote', 'show', 'origin'])
-        const match = remote?.match(/HEAD branch: (.+)/)
-        if (match?.[1]) {
-            return match[1].trim()
-        }
-        return 'main'
-    } catch {
-        return 'main'
-    }
-}
-
-async function getCommits(baseBranch: string): Promise<string> {
-    try {
-        return await runGit(['log', `${baseBranch}..HEAD`, '--pretty=format:%s%n%b', '--reverse'])
-    } catch {
-        return await runGit(['log', '-10', '--pretty=format:%s%n%b', '--reverse'])
-    }
-}
-
-async function getDiff(baseBranch: string): Promise<string> {
-    try {
-        return await runGit(['diff', `${baseBranch}...HEAD`])
-    } catch {
-        return await runGit(['diff', 'HEAD~5', 'HEAD'])
-    }
-}
-
-async function getChangedFiles(baseBranch: string): Promise<string[]> {
-    try {
-        const output = await runGit(['diff', '--name-only', `${baseBranch}...HEAD`])
-        return output.split('\n').filter(Boolean)
-    } catch {
-        const output = await runGit(['diff', '--name-only', 'HEAD~5', 'HEAD'])
-        return output.split('\n').filter(Boolean)
-    }
-}
+import {
+    checkUnpushedCommits,
+    createPR,
+    getChangedFiles,
+    getCommits,
+    getCurrentBranch,
+    getDefaultBranch,
+    getDiff,
+    getExistingPR,
+    pushBranch,
+    remoteBranchExists,
+} from './lib/git'
 
 async function getPRTemplate(): Promise<string | null> {
     const templatePaths = [
@@ -199,61 +132,6 @@ Only output valid JSON, no markdown code blocks.`,
     }
 }
 
-async function createPR(
-    title: string,
-    body: string,
-    baseBranch: string,
-    headBranch: string,
-): Promise<string> {
-    return await runGh([
-        'pr',
-        'create',
-        '--title',
-        title,
-        '--body',
-        body,
-        '--base',
-        baseBranch,
-        '--head',
-        headBranch,
-    ])
-}
-
-async function checkUnpushedCommits(): Promise<boolean> {
-    try {
-        const status = await runGit(['status', '-sb'])
-        return status.includes('ahead')
-    } catch {
-        return false
-    }
-}
-
-async function remoteBranchExists(): Promise<boolean> {
-    try {
-        const branch = await getCurrentBranch()
-        // Check if the remote branch actually exists (not just if upstream is configured)
-        await runGit(['ls-remote', '--exit-code', '--heads', 'origin', branch])
-        return true
-    } catch {
-        return false
-    }
-}
-
-async function getExistingPR(): Promise<string | null> {
-    try {
-        const prUrl = await runGh(['pr', 'view', '--json', 'url', '--jq', '.url'])
-        return prUrl || null
-    } catch {
-        return null
-    }
-}
-
-async function pushBranch(): Promise<void> {
-    const branch = await getCurrentBranch()
-    console.log(`Pushing branch ${branch}...`)
-    await runGit(['push', '-u', 'origin', branch])
-}
-
 async function main() {
     try {
         const currentBranch = await getCurrentBranch()
@@ -342,8 +220,9 @@ async function main() {
         }
 
         // Create PR
+        console.log('\nCreating PR...')
         const prUrl = await createPR(prContent.title, prContent.body, baseBranch, currentBranch)
-        console.log(prUrl)
+        console.log(`\nPR created: ${prUrl}`)
     } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : error}`)
         process.exit(1)

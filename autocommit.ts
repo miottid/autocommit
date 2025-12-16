@@ -1,36 +1,7 @@
 #!/usr/bin/env bun
 
 import Anthropic from '@anthropic-ai/sdk'
-
-async function getStagedDiff(): Promise<string> {
-    const proc = Bun.spawn(['git', 'diff', '--staged'], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-    })
-
-    const stdout = await new Response(proc.stdout).text()
-    const stderr = await new Response(proc.stderr).text()
-
-    await proc.exited
-
-    if (proc.exitCode !== 0) {
-        throw new Error(`git diff failed: ${stderr}`)
-    }
-
-    return stdout
-}
-
-async function getStagedFiles(): Promise<string[]> {
-    const proc = Bun.spawn(['git', 'diff', '--staged', '--name-only'], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-    })
-
-    const stdout = await new Response(proc.stdout).text()
-    await proc.exited
-
-    return stdout.trim().split('\n').filter(Boolean)
-}
+import { getStagedDiff, getStagedFiles, gitCommit } from './lib/git'
 
 async function generateCommitMessage(diff: string): Promise<string> {
     const apiKey = process.env.ANTHROPIC_API_KEY
@@ -68,24 +39,6 @@ ${diff}`,
     return content.text.trim()
 }
 
-async function gitCommit(message: string): Promise<void> {
-    const proc = Bun.spawn(['git', 'commit', '-m', message], {
-        stdout: 'pipe',
-        stderr: 'pipe',
-    })
-
-    const stdout = await new Response(proc.stdout).text()
-    const stderr = await new Response(proc.stderr).text()
-
-    await proc.exited
-
-    if (proc.exitCode !== 0) {
-        throw new Error(`git commit failed: ${stderr}`)
-    }
-
-    console.log(stdout)
-}
-
 async function main() {
     try {
         // Check for staged changes
@@ -110,7 +63,8 @@ async function main() {
         console.log(`\nCommit message: ${commitMessage}`)
 
         // Commit with the generated message
-        await gitCommit(commitMessage)
+        const output = await gitCommit(commitMessage)
+        console.log(output)
         console.log('\nCommit successful!')
     } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : error}`)
