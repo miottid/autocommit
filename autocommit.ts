@@ -10,12 +10,14 @@ const MAX_DIFF_SIZE = 8000
 
 interface Options {
     yes: boolean
+    dryRun: boolean
 }
 
 function parseArgs(): Options {
     const args = process.argv.slice(2)
     return {
         yes: args.includes('-y') || args.includes('--yes'),
+        dryRun: args.includes('--dry-run'),
     }
 }
 
@@ -108,6 +110,12 @@ async function main() {
         console.log('\nGenerating commit message...')
         const commitMessage = await generateCommitMessage(diff)
         console.log(`\nCommit message: ${commitMessage}`)
+
+        // Exit if dry-run
+        if (options.dryRun) {
+            console.log('\n[dry-run] Would commit with the above message.')
+            process.exit(0)
+        }
 
         // Confirm unless --yes flag is passed
         if (!options.yes) {

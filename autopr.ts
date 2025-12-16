@@ -49,6 +49,19 @@ function askQuestion(question: string): Promise<string> {
     })
 }
 
+interface Options {
+    yes: boolean
+    dryRun: boolean
+}
+
+function parseArgs(): Options {
+    const args = process.argv.slice(2)
+    return {
+        yes: args.includes('-y') || args.includes('--yes'),
+        dryRun: args.includes('--dry-run'),
+    }
+}
+
 interface PRContent {
     title: string
     body: string
@@ -135,6 +148,7 @@ Only output valid JSON, no markdown code blocks.`,
 
 async function main() {
     try {
+        const options = parseArgs()
         const currentBranch = await getCurrentBranch()
         if (!currentBranch) {
             throw new UserError('Not on a branch. Please checkout a branch first.')
@@ -157,12 +171,14 @@ async function main() {
             process.exit(0)
         }
 
-        // Push branch if needed
-        const remoteExists = await remoteBranchExists()
-        const hasUnpushed = await checkUnpushedCommits()
+        // Push branch if needed (skip in dry-run mode)
+        if (!options.dryRun) {
+            const remoteExists = await remoteBranchExists()
+            const hasUnpushed = await checkUnpushedCommits()
 
-        if (!remoteExists || hasUnpushed) {
-            await pushBranch()
+            if (!remoteExists || hasUnpushed) {
+                await pushBranch()
+            }
         }
 
         // Gather PR information
@@ -210,11 +226,19 @@ async function main() {
         console.log(`\nBody:\n${prContent.body}`)
         console.log(`\n${'='.repeat(60)}`)
 
-        // Confirm
-        const confirm = await askQuestion('\nCreate this PR? (Y/n): ')
-        if (confirm.toLowerCase() === 'n') {
-            console.log('PR creation cancelled.')
+        // Exit if dry-run
+        if (options.dryRun) {
+            console.log('\n[dry-run] Would create PR with the above content.')
             process.exit(0)
+        }
+
+        // Confirm unless --yes flag is passed
+        if (!options.yes) {
+            const confirm = await askQuestion('\nCreate this PR? (Y/n): ')
+            if (confirm.toLowerCase() === 'n') {
+                console.log('PR creation cancelled.')
+                process.exit(0)
+            }
         }
 
         // Create PR
