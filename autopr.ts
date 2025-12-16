@@ -239,6 +239,15 @@ async function remoteBranchExists(): Promise<boolean> {
     }
 }
 
+async function getExistingPR(): Promise<string | null> {
+    try {
+        const prUrl = await runGh(['pr', 'view', '--json', 'url', '--jq', '.url'])
+        return prUrl || null
+    } catch {
+        return null
+    }
+}
+
 async function pushBranch(): Promise<void> {
     const branch = await getCurrentBranch()
     console.log(`Pushing branch ${branch}...`)
@@ -262,6 +271,13 @@ async function main() {
                 `You are on the base branch (${baseBranch}). Create a feature branch first.`,
             )
             process.exit(1)
+        }
+
+        // Check if PR already exists
+        const existingPR = await getExistingPR()
+        if (existingPR) {
+            console.log(`A PR already exists for this branch: ${existingPR}`)
+            process.exit(0)
         }
 
         // Push branch if needed
