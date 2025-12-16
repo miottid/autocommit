@@ -1,12 +1,37 @@
 {
-  "name": "autocommit",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+    "name": "autocommit",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "bin": {
+        "autocommit": "./index.ts",
+        "lint": "biome lint --write",
+        "format": "biome format --write"
+    },
+    "scripts": {
+        "start": "bun index.ts",
+        "prepare": "husky"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@anthropic-ai/sdk": "0.71.2",
+        "@biomejs/biome": "2.3.9",
+        "husky": "9.1.7",
+        "lint-staged": "16.2.7"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "./**/*.{js,jsx,ts,tsx,json,css,yaml,yml,md}": [
+            "biome check --write --changed --no-errors-on-unmatched"
+        ]
+    }
 }
