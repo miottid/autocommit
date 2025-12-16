@@ -46,8 +46,11 @@ async function getCurrentBranch(): Promise<string> {
 async function getDefaultBranch(): Promise<string> {
     try {
         const remote = await runGit(['remote', 'show', 'origin'])
-        const match = remote.match(/HEAD branch: (.+)/)
-        return match ? match[1].trim() : 'main'
+        const match = remote?.match(/HEAD branch: (.+)/)
+        if (match?.[1]) {
+            return match[1].trim()
+        }
+        return 'main'
     } catch {
         return 'main'
     }
@@ -123,12 +126,12 @@ async function generatePRContent(
     diff: string,
     changedFiles: string[],
     template: string | null,
-    additionalContext?: string
+    additionalContext?: string,
 ): Promise<PRContent> {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
         throw new Error(
-            'ANTHROPIC_API_KEY environment variable is not set. Please set it to use autopr.'
+            'ANTHROPIC_API_KEY environment variable is not set. Please set it to use autopr.',
         )
     }
 
@@ -185,7 +188,7 @@ Only output valid JSON, no markdown code blocks.`,
     })
 
     const content = response.content[0]
-    if (content.type !== 'text') {
+    if (content?.type !== 'text') {
         throw new Error('Unexpected response type from Claude')
     }
 
@@ -228,7 +231,9 @@ async function main() {
         console.log(`Base branch: ${baseBranch}`)
 
         if (currentBranch === baseBranch) {
-            console.error(`You are on the base branch (${baseBranch}). Create a feature branch first.`)
+            console.error(
+                `You are on the base branch (${baseBranch}). Create a feature branch first.`,
+            )
             process.exit(1)
         }
 
@@ -256,7 +261,9 @@ async function main() {
         }
 
         console.log(`\nChanged files (${changedFiles.length}):`)
-        changedFiles.slice(0, 10).forEach((f) => console.log(`  ${f}`))
+        changedFiles.slice(0, 10).forEach((f) => {
+            console.log(`  ${f}`)
+        })
         if (changedFiles.length > 10) {
             console.log(`  ... and ${changedFiles.length - 10} more`)
         }
@@ -267,7 +274,7 @@ async function main() {
 
         // Handle clarification if needed
         while (prContent.needsClarification && prContent.clarificationQuestion) {
-            console.log(`\nClarification needed:`)
+            console.log('\nClarification needed:')
             const answer = await askQuestion(`${prContent.clarificationQuestion}\n> `)
             if (!answer) {
                 console.log('Proceeding without additional context...')
@@ -278,12 +285,12 @@ async function main() {
         }
 
         // Show preview
-        console.log('\n' + '='.repeat(60))
+        console.log(`\n${'='.repeat(60)}`)
         console.log('PR PREVIEW')
         console.log('='.repeat(60))
         console.log(`\nTitle: ${prContent.title}`)
         console.log(`\nBody:\n${prContent.body}`)
-        console.log('\n' + '='.repeat(60))
+        console.log(`\n${'='.repeat(60)}`)
 
         // Confirm
         const confirm = await askQuestion('\nCreate this PR? (Y/n): ')
