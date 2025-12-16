@@ -14,8 +14,3 @@ Default to using Bun instead of Node.js.
 - Use `bunx <package> <command>` instead of `npx <package> <command>`
 - Bun automatically loads .env, so don't use dotenv.
 
-###
-
-Create a CLI that `git commit` and generate a commit message based on the changes.
-We use Claude and the `ANTHROPIC_API_KEY` to generate the commit message.
-Only staged files should be taken into account. Unstaged content should not be commited or discarded.
