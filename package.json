@@ -1,15 +1,16 @@
 {
     "name": "autocommit",
-    "module": "index.ts",
+    "module": "autocommit.ts",
     "type": "module",
     "private": true,
     "bin": {
-        "autocommit": "./index.ts",
+        "autocommit": "./autocommit.ts",
+        "autopr": "./autopr.ts",
         "lint": "biome lint --write",
         "format": "biome format --write"
     },
     "scripts": {
-        "start": "bun index.ts",
+        "start": "bun autocommit.ts",
         "prepare": "husky"
     },
     "devDependencies": {
