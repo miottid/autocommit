@@ -4,6 +4,18 @@ import Anthropic from '@anthropic-ai/sdk'
 import { ApiError, UserError, handleError } from './lib/errors'
 import { getStagedDiff, getStagedFiles, gitCommit } from './lib/git'
 
+const MAX_DIFF_SIZE = 8000
+
+function truncateDiff(diff: string): { truncated: string; wasTruncated: boolean } {
+    if (diff.length <= MAX_DIFF_SIZE) {
+        return { truncated: diff, wasTruncated: false }
+    }
+    return {
+        truncated: `${diff.slice(0, MAX_DIFF_SIZE)}\n\n... (diff truncated, ${diff.length - MAX_DIFF_SIZE} characters omitted)`,
+        wasTruncated: true,
+    }
+}
+
 async function generateCommitMessage(diff: string): Promise<string> {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
@@ -49,9 +61,15 @@ async function main() {
         console.log(`Staged files:\n  ${stagedFiles.join('\n  ')}`)
 
         // Get the staged diff
-        const diff = await getStagedDiff()
-        if (!diff.trim()) {
+        const rawDiff = await getStagedDiff()
+        if (!rawDiff.trim()) {
             throw new UserError('No diff content found in staged changes.')
+        }
+
+        // Truncate large diffs
+        const { truncated: diff, wasTruncated } = truncateDiff(rawDiff)
+        if (wasTruncated) {
+            console.log(`\nNote: Diff was truncated (${rawDiff.length} chars -> ${MAX_DIFF_SIZE} chars)`)
         }
 
         // Generate commit message
