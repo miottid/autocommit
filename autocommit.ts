@@ -2,6 +2,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import * as readline from 'readline'
+import { getModel } from './lib/config'
 import { ApiError, UserError, handleError } from './lib/errors'
 import { getStagedDiff, getStagedFiles, gitCommit } from './lib/git'
 
@@ -49,9 +50,10 @@ async function generateCommitMessage(diff: string): Promise<string> {
     }
 
     const client = new Anthropic({ apiKey })
+    const model = getModel()
 
     const response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model,
         max_tokens: 256,
         messages: [
             {

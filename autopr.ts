@@ -2,6 +2,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import * as readline from 'readline'
+import { getModel } from './lib/config'
 import { ApiError, UserError, handleError } from './lib/errors'
 import {
     checkUnpushedCommits,
@@ -68,6 +69,7 @@ async function generatePRContent(
     }
 
     const client = new Anthropic({ apiKey })
+    const model = getModel()
 
     const templateInstructions = template
         ? `Use this PR template as a guide for the body structure. IMPORTANT: Remove any sections from the template that are not relevant to the changes (e.g., if there are no breaking changes, remove the breaking changes section; if there are no migrations, remove the migration section).\n\nTemplate:\n${template}\n\n`
@@ -87,7 +89,7 @@ How to test these changes
         : ''
 
     const response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model,
         max_tokens: 1024,
         messages: [
             {
