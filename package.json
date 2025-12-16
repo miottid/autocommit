@@ -11,6 +11,11 @@
     },
     "scripts": {
         "start": "bun autocommit.ts",
+        "build": "bun build --compile autocommit.ts --outfile dist/autocommit && bun build --compile autopr.ts --outfile dist/autopr",
+        "build:linux": "bun build --compile --target=bun-linux-x64 autocommit.ts --outfile dist/autocommit-linux && bun build --compile --target=bun-linux-x64 autopr.ts --outfile dist/autopr-linux",
+        "build:macos": "bun build --compile --target=bun-darwin-arm64 autocommit.ts --outfile dist/autocommit-macos && bun build --compile --target=bun-darwin-arm64 autopr.ts --outfile dist/autopr-macos",
+        "build:windows": "bun build --compile --target=bun-windows-x64 autocommit.ts --outfile dist/autocommit.exe && bun build --compile --target=bun-windows-x64 autopr.ts --outfile dist/autopr.exe",
+        "build:all": "bun run build && bun run build:linux && bun run build:macos && bun run build:windows",
         "prepare": "husky"
     },
     "devDependencies": {
