@@ -5,9 +5,7 @@
     "private": true,
     "bin": {
         "autocommit": "./autocommit.ts",
-        "autopr": "./autopr.ts",
-        "lint": "biome lint --write",
-        "format": "biome format --write"
+        "autopr": "./autopr.ts"
     },
     "scripts": {
         "start": "bun autocommit.ts",
@@ -16,6 +14,9 @@
         "build:macos": "bun build --compile --target=bun-darwin-arm64 autocommit.ts --outfile dist/autocommit-macos && bun build --compile --target=bun-darwin-arm64 autopr.ts --outfile dist/autopr-macos",
         "build:windows": "bun build --compile --target=bun-windows-x64 autocommit.ts --outfile dist/autocommit.exe && bun build --compile --target=bun-windows-x64 autopr.ts --outfile dist/autopr.exe",
         "build:all": "bun run build && bun run build:linux && bun run build:macos && bun run build:windows",
+        "test": "bun test",
+        "lint": "biome lint --write",
+        "format": "biome format --write",
         "prepare": "husky"
     },
     "devDependencies": {
