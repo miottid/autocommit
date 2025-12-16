@@ -2,6 +2,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import * as readline from 'readline'
+import { ApiError, UserError, handleError } from './lib/errors'
 import {
     checkUnpushedCommits,
     createPR,
@@ -63,9 +64,7 @@ async function generatePRContent(
 ): Promise<PRContent> {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
-        throw new Error(
-            'ANTHROPIC_API_KEY environment variable is not set. Please set it to use autopr.',
-        )
+        throw new ApiError('ANTHROPIC_API_KEY environment variable is not set.')
     }
 
     const client = new Anthropic({ apiKey })
@@ -122,13 +121,13 @@ Only output valid JSON, no markdown code blocks.`,
 
     const content = response.content[0]
     if (content?.type !== 'text') {
-        throw new Error('Unexpected response type from Claude')
+        throw new ApiError('Unexpected response type from API')
     }
 
     try {
         return JSON.parse(content.text) as PRContent
     } catch {
-        throw new Error(`Failed to parse Claude response: ${content.text}`)
+        throw new ApiError(`Failed to parse API response: ${content.text}`)
     }
 }
 
@@ -136,8 +135,7 @@ async function main() {
     try {
         const currentBranch = await getCurrentBranch()
         if (!currentBranch) {
-            console.error('Not on a branch. Please checkout a branch first.')
-            process.exit(1)
+            throw new UserError('Not on a branch. Please checkout a branch first.')
         }
 
         const baseBranch = await getDefaultBranch()
@@ -145,10 +143,9 @@ async function main() {
         console.log(`Base branch: ${baseBranch}`)
 
         if (currentBranch === baseBranch) {
-            console.error(
+            throw new UserError(
                 `You are on the base branch (${baseBranch}). Create a feature branch first.`,
             )
-            process.exit(1)
         }
 
         // Check if PR already exists
@@ -176,8 +173,7 @@ async function main() {
         ])
 
         if (changedFiles.length === 0) {
-            console.error('No changes found compared to base branch.')
-            process.exit(1)
+            throw new UserError('No changes found compared to base branch.')
         }
 
         console.log(`\nChanged files (${changedFiles.length}):`)
@@ -224,8 +220,7 @@ async function main() {
         const prUrl = await createPR(prContent.title, prContent.body, baseBranch, currentBranch)
         console.log(`\nPR created: ${prUrl}`)
     } catch (error) {
-        console.error(`Error: ${error instanceof Error ? error.message : error}`)
-        process.exit(1)
+        handleError(error)
     }
 }
 

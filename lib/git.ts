@@ -1,3 +1,5 @@
+import { GitError } from './errors'
+
 export async function runGit(args: string[]): Promise<string> {
     const proc = Bun.spawn(['git', ...args], {
         stdout: 'pipe',
@@ -10,7 +12,8 @@ export async function runGit(args: string[]): Promise<string> {
     await proc.exited
 
     if (proc.exitCode !== 0) {
-        throw new Error(`git ${args.join(' ')} failed: ${stderr}`)
+        const command = `git ${args.join(' ')}`
+        throw new GitError(`Command failed: ${command}`, command, stderr.trim())
     }
 
     return stdout.trim()
@@ -28,7 +31,8 @@ export async function runGh(args: string[]): Promise<string> {
     await proc.exited
 
     if (proc.exitCode !== 0) {
-        throw new Error(`gh ${args.join(' ')} failed: ${stderr}`)
+        const command = `gh ${args.join(' ')}`
+        throw new GitError(`Command failed: ${command}`, command, stderr.trim())
     }
 
     return stdout.trim()

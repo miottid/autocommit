@@ -1,14 +1,13 @@
 #!/usr/bin/env bun
 
 import Anthropic from '@anthropic-ai/sdk'
+import { ApiError, UserError, handleError } from './lib/errors'
 import { getStagedDiff, getStagedFiles, gitCommit } from './lib/git'
 
 async function generateCommitMessage(diff: string): Promise<string> {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
-        throw new Error(
-            'ANTHROPIC_API_KEY environment variable is not set. Please set it to use autocommit.',
-        )
+        throw new ApiError('ANTHROPIC_API_KEY environment variable is not set.')
     }
 
     const client = new Anthropic({ apiKey })
@@ -33,7 +32,7 @@ ${diff}`,
 
     const content = response.content[0]
     if (content?.type !== 'text') {
-        throw new Error('Unexpected response type from Claude')
+        throw new ApiError('Unexpected response type from API')
     }
 
     return content.text.trim()
@@ -44,8 +43,7 @@ async function main() {
         // Check for staged changes
         const stagedFiles = await getStagedFiles()
         if (stagedFiles.length === 0) {
-            console.error("No staged changes found. Stage your changes with 'git add' first.")
-            process.exit(1)
+            throw new UserError("No staged changes found. Stage your changes with 'git add' first.")
         }
 
         console.log(`Staged files:\n  ${stagedFiles.join('\n  ')}`)
@@ -53,8 +51,7 @@ async function main() {
         // Get the staged diff
         const diff = await getStagedDiff()
         if (!diff.trim()) {
-            console.error('No diff content found in staged changes.')
-            process.exit(1)
+            throw new UserError('No diff content found in staged changes.')
         }
 
         // Generate commit message
@@ -67,8 +64,7 @@ async function main() {
         console.log(output)
         console.log('\nCommit successful!')
     } catch (error) {
-        console.error(`Error: ${error instanceof Error ? error.message : error}`)
-        process.exit(1)
+        handleError(error)
     }
 }
 
