@@ -73,7 +73,7 @@ async function main() {
             throw new UserError("No staged changes found. Stage your changes with 'git add' first.")
         }
 
-        console.log(`Staged files:\n  ${stagedFiles.join('\n  ')}`)
+        console.log(`Staged files:\n  ${stagedFiles.join('\n  ')}\n`)
 
         // Get the staged diff
         const rawDiff = await getStagedDiff()
@@ -90,9 +90,7 @@ async function main() {
         }
 
         // Generate commit message
-        console.log('\nGenerating commit message...')
         const commitMessage = await generateCommitMessage(diff)
-        console.log(`\nCommit message: ${commitMessage}`)
 
         // Exit if dry-run
         if (options.dryRun) {
@@ -103,7 +101,6 @@ async function main() {
         // Commit with the generated message
         const output = await gitCommit(commitMessage)
         console.log(output)
-        console.log('\nCommit successful!')
     } catch (error) {
         handleError(error)
     }
