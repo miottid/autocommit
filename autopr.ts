@@ -244,7 +244,7 @@ async function main() {
         // Create PR
         console.log('\nCreating PR...')
         const prUrl = await createPR(prContent.title, prContent.body, baseBranch, currentBranch)
-        console.log(`\nPR created: ${prUrl}`)
+        console.log(prUrl)
     } catch (error) {
         handleError(error)
     }
