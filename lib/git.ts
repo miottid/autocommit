@@ -1,5 +1,38 @@
 import { GitError } from './errors'
 
+// Lock files to exclude from diffs and file lists
+const EXCLUDED_LOCK_FILES = [
+    'package-lock.json',
+    'bun.lock',
+    'bun.lockb',
+    'yarn.lock',
+    'pnpm-lock.yaml',
+    'Gemfile.lock',
+    'Cargo.lock',
+    'poetry.lock',
+    'composer.lock',
+    'go.sum',
+    'Pipfile.lock',
+    'npm-shrinkwrap.json',
+    'deno.lock',
+    'flake.lock',
+    'pdm.lock',
+    'uv.lock',
+]
+
+// Generate git pathspec exclusions for lock files
+function getLockFileExclusions(): string[] {
+    return EXCLUDED_LOCK_FILES.map((file) => `:!${file}`)
+}
+
+// Filter out lock files from a list of file paths
+function filterLockFiles(files: string[]): string[] {
+    return files.filter((file) => {
+        const basename = file.split('/').pop() || file
+        return !EXCLUDED_LOCK_FILES.includes(basename)
+    })
+}
+
 export async function runGit(args: string[]): Promise<string> {
     const proc = Bun.spawn(['git', ...args], {
         stdout: 'pipe',
@@ -56,12 +89,13 @@ export async function getDefaultBranch(): Promise<string> {
 }
 
 export async function getStagedDiff(): Promise<string> {
-    return runGit(['diff', '--staged'])
+    return runGit(['diff', '--staged', '--', '.', ...getLockFileExclusions()])
 }
 
 export async function getStagedFiles(): Promise<string[]> {
     const output = await runGit(['diff', '--staged', '--name-only'])
-    return output.split('\n').filter(Boolean)
+    const files = output.split('\n').filter(Boolean)
+    return filterLockFiles(files)
 }
 
 export async function gitCommit(message: string): Promise<string> {
@@ -103,19 +137,21 @@ export async function getCommits(baseBranch: string): Promise<string> {
 
 export async function getDiff(baseBranch: string): Promise<string> {
     try {
-        return await runGit(['diff', `${baseBranch}...HEAD`])
+        return await runGit(['diff', `${baseBranch}...HEAD`, '--', '.', ...getLockFileExclusions()])
     } catch {
-        return await runGit(['diff', 'HEAD~5', 'HEAD'])
+        return await runGit(['diff', 'HEAD~5', 'HEAD', '--', '.', ...getLockFileExclusions()])
     }
 }
 
 export async function getChangedFiles(baseBranch: string): Promise<string[]> {
     try {
         const output = await runGit(['diff', '--name-only', `${baseBranch}...HEAD`])
-        return output.split('\n').filter(Boolean)
+        const files = output.split('\n').filter(Boolean)
+        return filterLockFiles(files)
     } catch {
         const output = await runGit(['diff', '--name-only', 'HEAD~5', 'HEAD'])
-        return output.split('\n').filter(Boolean)
+        const files = output.split('\n').filter(Boolean)
+        return filterLockFiles(files)
     }
 }
 
