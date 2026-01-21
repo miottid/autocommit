@@ -75,6 +75,7 @@ async function generatePRContent(
     changedFiles: string[],
     template: string | null,
     additionalContext?: string,
+    existingPR?: PRContent,
 ): Promise<PRContent> {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
@@ -84,6 +85,49 @@ async function generatePRContent(
     const client = new Anthropic({ apiKey })
     const model = getModel()
 
+    // If we're updating an existing PR, use different instructions
+    if (existingPR && additionalContext) {
+        const response = await client.messages.create({
+            model,
+            max_tokens: 1024,
+            messages: [
+                {
+                    role: 'user',
+                    content: `Update the following GitHub Pull Request based on the user's feedback.
+
+Current PR:
+Title: ${existingPR.title}
+Body:
+${existingPR.body}
+
+User feedback: ${additionalContext}
+
+Respond in JSON format:
+{
+  "title": "Updated PR title (concise, max 72 chars)",
+  "body": "Updated PR description",
+  "needsClarification": false,
+  "clarificationQuestion": null
+}
+
+Only output valid JSON, no markdown code blocks.`,
+                },
+            ],
+        })
+
+        const content = response.content[0]
+        if (content?.type !== 'text') {
+            throw new ApiError('Unexpected response type from API')
+        }
+
+        try {
+            return JSON.parse(content.text) as PRContent
+        } catch {
+            throw new ApiError(`Failed to parse API response: ${content.text}`)
+        }
+    }
+
+    // Original generation logic for new PRs
     const templateInstructions = template
         ? `Use this PR template as a guide for the body structure. IMPORTANT: Remove any sections from the template that are not relevant to the changes (e.g., if there are no breaking changes, remove the breaking changes section; if there are no migrations, remove the migration section).\n\nTemplate:\n${template}\n\n`
         : `Structure the PR body with these sections (only include sections relevant to the changes):
@@ -232,12 +276,42 @@ async function main() {
             process.exit(0)
         }
 
-        // Confirm unless --yes flag is passed
+        // Interactive adjustment loop unless --yes flag is passed
         if (!options.yes) {
-            const confirm = await askQuestion('\nCreate this PR? (Y/n): ')
-            if (confirm.toLowerCase() === 'n') {
-                console.log('PR creation cancelled.')
-                process.exit(0)
+            let satisfied = false
+
+            while (!satisfied) {
+                const response = await askQuestion(
+                    '\nIs this PR ready to create? (Y/n/comment): ',
+                )
+                const responseLower = response.toLowerCase()
+
+                if (responseLower === 'y' || responseLower === 'yes' || response === '') {
+                    satisfied = true
+                } else if (responseLower === 'n' || responseLower === 'no') {
+                    console.log('PR creation cancelled.')
+                    process.exit(0)
+                } else {
+                    // User provided feedback - update existing PR
+                    console.log('\nAdjusting PR based on your feedback...')
+
+                    prContent = await generatePRContent(
+                        commits,
+                        diff,
+                        changedFiles,
+                        template,
+                        response,
+                        prContent,
+                    )
+
+                    // Show updated preview
+                    console.log(`\n${'='.repeat(60)}`)
+                    console.log('UPDATED PR PREVIEW')
+                    console.log('='.repeat(60))
+                    console.log(`\nTitle: ${prContent.title}`)
+                    console.log(`\nBody:\n${prContent.body}`)
+                    console.log(`\n${'='.repeat(60)}`)
+                }
             }
         }
 
