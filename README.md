@@ -35,6 +35,20 @@ cargo install --path crates/autocommit
 cargo install --path crates/autopr
 ```
 
+### Set up development environment
+
+If you're contributing to the project, install the git hooks to ensure code is formatted before committing:
+
+```bash
+# Using just
+just install-hooks
+
+# Or manually
+./scripts/install-hooks.sh
+```
+
+This installs a pre-commit hook that runs `cargo fmt --check` before each commit.
+
 ### Build for multiple platforms
 
 Using [just](https://github.com/casey/just):
@@ -165,6 +179,8 @@ The project uses GitHub Actions for continuous integration:
 - **Test**: Runs `cargo test` on Linux, macOS, and Windows
 - **Lint**: Runs `cargo fmt --check` and `cargo clippy` to ensure code quality
 - **Build**: Creates release binaries for all platforms and uploads them as artifacts
+
+**Note:** The CI will fail if code is not properly formatted. Run `cargo fmt --all` before pushing or install the pre-commit hook to check automatically.
 
 ## License
 

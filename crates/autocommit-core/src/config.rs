@@ -26,8 +26,7 @@ impl Config {
             )
         })?;
 
-        let model = env::var("AUTOCOMMIT_MODEL")
-            .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+        let model = env::var("AUTOCOMMIT_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
 
         Ok(Config {
             anthropic_api_key,

@@ -81,7 +81,10 @@ impl AnthropicClient {
 
         if !response.status().is_success() {
             let status = response.status();
-            let error_text = response.text().await.unwrap_or_else(|_| String::from("Unknown error"));
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| String::from("Unknown error"));
             return Err(Error::Api(format!(
                 "API request failed with status {}: {}",
                 status, error_text

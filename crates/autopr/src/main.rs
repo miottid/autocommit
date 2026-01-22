@@ -1,7 +1,4 @@
-use autocommit_core::{
-    anthropic::AnthropicClient,
-    exit_with_error, git, Config, Error, Result,
-};
+use autocommit_core::{anthropic::AnthropicClient, exit_with_error, git, Config, Error, Result};
 use clap::Parser;
 use dialoguer::Input;
 use tokio::fs;
@@ -70,10 +67,7 @@ async fn run() -> Result<()> {
 
     // Check if PR already exists
     if let Some(existing_pr_url) = git::get_existing_pr().await? {
-        println!(
-            "A PR already exists for this branch: {}",
-            existing_pr_url
-        );
+        println!("A PR already exists for this branch: {}", existing_pr_url);
         return Ok(());
     }
 
@@ -119,7 +113,14 @@ async fn run() -> Result<()> {
     println!("\nGenerating PR description...");
     let client = AnthropicClient::new(config);
     let mut pr_content = client
-        .generate_pr_content(&commits, &diff, &changed_files, template.as_deref(), None, None)
+        .generate_pr_content(
+            &commits,
+            &diff,
+            &changed_files,
+            template.as_deref(),
+            None,
+            None,
+        )
         .await?;
 
     // Handle clarification if needed

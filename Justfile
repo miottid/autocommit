@@ -43,3 +43,7 @@ clean:
 # Check if code compiles without building
 check:
     cargo check --workspace
+
+# Install git hooks
+install-hooks:
+    ./scripts/install-hooks.sh

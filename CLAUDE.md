@@ -33,3 +33,15 @@ This is a Cargo workspace with three crates:
 - Environment variables are loaded from `.env` files using the `dotenvy` crate
 - Required: `ANTHROPIC_API_KEY`
 - Optional: `AUTOCOMMIT_MODEL`
+
+## Development Setup
+
+Install git hooks for automatic formatting checks:
+
+```bash
+just install-hooks
+# or
+./scripts/install-hooks.sh
+```
+
+The pre-commit hook will run `cargo fmt --check` before each commit to ensure code is properly formatted.
