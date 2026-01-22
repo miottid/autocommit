@@ -37,7 +37,7 @@ cargo install --path crates/autopr
 
 ### Set up development environment
 
-If you're contributing to the project, install the git hooks to ensure code is formatted before committing:
+If you're contributing to the project, install the git hooks to ensure code quality:
 
 ```bash
 # Using just
@@ -47,7 +47,9 @@ just install-hooks
 ./scripts/install-hooks.sh
 ```
 
-This installs a pre-commit hook that automatically formats code with `cargo fmt` before each commit and re-stages the formatted files.
+This installs two hooks:
+- **Pre-commit**: Automatically formats code with `cargo fmt` and re-stages files
+- **Pre-push**: Runs `cargo clippy` to catch linting issues before pushing (use `git push --no-verify` to skip if needed)
 
 ### Build for multiple platforms
 

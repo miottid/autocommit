@@ -1,0 +1,21 @@
+#!/bin/sh
+# Pre-push hook for Rust linting
+# This hook runs clippy before pushing to catch issues early
+
+set -e
+
+echo "Running clippy checks..."
+
+# Run clippy with warnings as errors (same as CI)
+if ! cargo clippy --workspace -- -D warnings; then
+    echo ""
+    echo "❌ Clippy check failed!"
+    echo ""
+    echo "Fix the issues above or use 'git push --no-verify' to skip this check."
+    echo "(Note: CI will still run clippy, so issues must be fixed eventually)"
+    exit 1
+fi
+
+echo "✅ Clippy check passed!"
+
+exit 0

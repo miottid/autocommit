@@ -36,7 +36,7 @@ This is a Cargo workspace with three crates:
 
 ## Development Setup
 
-Install git hooks for automatic formatting checks:
+Install git hooks for automatic code quality checks:
 
 ```bash
 just install-hooks
@@ -44,4 +44,6 @@ just install-hooks
 ./scripts/install-hooks.sh
 ```
 
-The pre-commit hook will automatically run `cargo fmt` before each commit and re-stage formatted files.
+This installs two hooks:
+- **Pre-commit**: Automatically runs `cargo fmt` and re-stages formatted files
+- **Pre-push**: Runs `cargo clippy` to catch linting issues before pushing

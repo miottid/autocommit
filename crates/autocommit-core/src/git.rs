@@ -13,7 +13,7 @@ async fn run_git(args: &[&str]) -> Result<String> {
         .args(args)
         .output()
         .await
-        .map_err(|e| Error::Io(e))?;
+        .map_err(Error::Io)?;
 
     if !output.status.success() {
         let command = format!("git {}", args.join(" "));
@@ -34,7 +34,7 @@ async fn run_gh(args: &[&str]) -> Result<String> {
         .args(args)
         .output()
         .await
-        .map_err(|e| Error::Io(e))?;
+        .map_err(Error::Io)?;
 
     if !output.status.success() {
         let command = format!("gh {}", args.join(" "));
