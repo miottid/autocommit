@@ -1,5 +1,7 @@
 # autocommit
 
+[![CI](https://github.com/miottid/autocommit/workflows/CI/badge.svg)](https://github.com/miottid/autocommit/actions)
+
 CLI tools that use Claude to automatically generate git commit messages and pull request descriptions.
 
 Written in Rust for fast startup, small binaries, and zero runtime dependencies.
@@ -155,6 +157,14 @@ The project is structured as a Cargo workspace with three crates:
 - Iterative PR content adjustment based on user feedback
 - Automatically pushes branches before creating PRs
 - Supports PR templates from `.github/PULL_REQUEST_TEMPLATE.md`
+
+## CI/CD
+
+The project uses GitHub Actions for continuous integration:
+
+- **Test**: Runs `cargo test` on Linux, macOS, and Windows
+- **Lint**: Runs `cargo fmt --check` and `cargo clippy` to ensure code quality
+- **Build**: Creates release binaries for all platforms and uploads them as artifacts
 
 ## License
 
