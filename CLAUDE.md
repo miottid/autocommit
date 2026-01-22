@@ -44,4 +44,4 @@ just install-hooks
 ./scripts/install-hooks.sh
 ```
 
-The pre-commit hook will run `cargo fmt --check` before each commit to ensure code is properly formatted.
+The pre-commit hook will automatically run `cargo fmt` before each commit and re-stage formatted files.

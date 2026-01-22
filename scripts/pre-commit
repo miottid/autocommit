@@ -1,21 +1,22 @@
 #!/bin/sh
 # Pre-commit hook for Rust formatting
-# This hook runs cargo fmt before committing
+# This hook automatically formats Rust code and re-stages the changes
 
 set -e
 
-echo "Running cargo fmt check..."
+echo "Running cargo fmt..."
 
 # Check if any Rust files are staged
 if git diff --cached --name-only | grep -q '\.rs$'; then
-    # Run cargo fmt check
-    if ! cargo fmt --all -- --check; then
-        echo ""
-        echo "❌ Code formatting check failed!"
-        echo "Run 'cargo fmt --all' to fix formatting issues."
-        exit 1
-    fi
-    echo "✅ Code formatting check passed!"
+    # Format all Rust code
+    cargo fmt --all
+
+    # Re-stage any Rust files that were already staged
+    git diff --cached --name-only | grep '\.rs$' | while read -r file; do
+        git add "$file"
+    done
+
+    echo "✅ Code formatted and re-staged!"
 fi
 
 exit 0
