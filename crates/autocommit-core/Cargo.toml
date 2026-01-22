@@ -1,0 +1,18 @@
+[package]
+name = "autocommit-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+dotenvy = { workspace = true }
+regex = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.12"

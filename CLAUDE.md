@@ -1,16 +1,35 @@
 ---
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
+description: Rust project instructions
+globs: "*.rs, Cargo.toml, Justfile"
+alwaysApply: true
 ---
 
-Default to using Bun instead of Node.js.
+This is a Rust project. Use cargo and standard Rust tooling.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+## Build and Run
 
+- Use `cargo build` for debug builds
+- Use `cargo build --release` for optimized builds
+- Use `cargo test` to run tests
+- Use `cargo check` for fast compilation checking
+- Use `cargo clippy` for linting
+- Use `cargo fmt` for formatting
+
+## Workspace Structure
+
+This is a Cargo workspace with three crates:
+- `crates/autocommit-core` - Shared library
+- `crates/autocommit` - Binary for commit message generation
+- `crates/autopr` - Binary for PR generation
+
+## Running Binaries
+
+- `cargo run --bin autocommit` - Run autocommit
+- `cargo run --bin autopr` - Run autopr
+- Or use the `just` recipes defined in `Justfile`
+
+## Environment Variables
+
+- Environment variables are loaded from `.env` files using the `dotenvy` crate
+- Required: `ANTHROPIC_API_KEY`
+- Optional: `AUTOCOMMIT_MODEL`
