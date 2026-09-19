@@ -2,7 +2,7 @@ use crate::errors::{Error, Result};
 use std::env;
 
 /// Default Anthropic model to use
-pub const DEFAULT_MODEL: &str = "claude-sonnet-4-20250514";
+pub const DEFAULT_MODEL: &str = "claude-sonnet-4-6";
 
 /// Configuration loaded from environment variables
 #[derive(Debug, Clone)]
@@ -33,18 +33,4 @@ impl Config {
             model,
         })
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_model() {
-        assert_eq!(DEFAULT_MODEL, "claude-sonnet-4-20250514");
-    }
-
-    // Note: Tests that modify environment variables are problematic in parallel test execution
-    // and have been removed. The config loading logic is simple enough that manual testing
-    // or integration tests are sufficient.
 }

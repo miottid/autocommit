@@ -129,7 +129,7 @@ Or add it to a `.env` file (loaded automatically).
 Optionally customize the model:
 
 ```bash
-export AUTOCOMMIT_MODEL=claude-sonnet-4-20250514  # default
+export AUTOCOMMIT_MODEL=claude-sonnet-4-6  # default
 ```
 
 ### Git Aliases
